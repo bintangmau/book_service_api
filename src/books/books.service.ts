@@ -20,6 +20,8 @@ export class BooksService {
       result.push({
         id: book.id,
         title: book.volumeInfo.title,
+        authors: book.volumeInfo.author ? book.volumeInfo.author[0] : "-",
+        description: book.volumeInfo.description,
         thumbnail: book.volumeInfo.imageLinks.thumbnail,
         author: "Untitled",
         rating: this.rating()
@@ -31,13 +33,16 @@ export class BooksService {
   }
 
   async createWhitelist(data: any) {
-    return await this.cacheManager.set("whitelist_books", JSON.stringify(data), { ttl: 3600});
+    let whitelist = await this.getWhiteList();
+    let record = whitelist.length ? whitelist : [];
+    record.push(data);
+    return await this.cacheManager.set("whitelist_books", JSON.stringify(record), { ttl: 3600});
   }
 
   async getWhiteList() {
-    let result = JSON.parse(await this.cacheManager.get("whitelist_books"));
-    if(result) return result;
-    return [];
+    let data: any = await this.cacheManager.get("whitelist_books");
+    if(!data) return [];
+    return JSON.parse(data);
   }
 
   private rating() {
